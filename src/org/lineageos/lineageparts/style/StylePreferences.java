@@ -18,7 +18,6 @@ package org.lineageos.lineageparts.style;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ActivityManager;
 import android.app.WallpaperManager;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -34,17 +33,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.preference.Preference;
 import android.support.v7.graphics.Palette;
-import android.support.v14.preference.SwitchPreference;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
-import android.content.Intent;
-import android.os.Handler;
-import android.os.ServiceManager;
-import android.os.RemoteException;
-import android.content.om.IOverlayManager;
-import android.content.om.OverlayInfo;
-import android.content.Context;
 
 import org.lineageos.lineageparts.R;
 import org.lineageos.lineageparts.SettingsPreferenceFragment;
@@ -61,8 +52,6 @@ import lineageos.providers.LineageSettings;
 import lineageos.style.StyleInterface;
 import lineageos.style.Suggestion;
 
-import com.android.settingslib.drawer.SettingsDrawerActivity;
-
 public class StylePreferences extends SettingsPreferenceFragment {
     private static final String TAG = "StylePreferences";
     private static final String CHANGE_STYLE_PERMISSION =
@@ -71,16 +60,14 @@ public class StylePreferences extends SettingsPreferenceFragment {
 
     private Preference mStylePref;
     private Preference mAccentPref;
-    private SwitchPreference mForceBlackPref;
 
     private List<Accent> mAccents;
 
     private StyleInterface mInterface;
     private StyleStatus mStyleStatus;
     private String mPackageName;
-    private byte mOkStatus = 0;
 
-    private IOverlayManager mOverlayManager;
+    private byte mOkStatus = 0;
 
     @Override
     public void onCreate(Bundle savedInstance) {
@@ -89,16 +76,11 @@ public class StylePreferences extends SettingsPreferenceFragment {
         mInterface = StyleInterface.getInstance(getContext());
         mPackageName = getContext().getPackageName();
 
-        mOverlayManager = IOverlayManager.Stub.asInterface(ServiceManager.getService(Context.OVERLAY_SERVICE));
         addPreferencesFromResource(R.xml.style_preferences);
 
         mStylePref = findPreference("berry_global_style");
         mStylePref.setOnPreferenceChangeListener(this::onStyleChange);
         setupStylePref();
-
-        mForceBlackPref = (SwitchPreference) findPreference("style_force_black");
-        mForceBlackPref.setOnPreferenceChangeListener(this::onForceBlackPrefChange);
-        setupForceBlackPref();
 
         mAccents = AccentUtils.getAccents(getContext(), mStyleStatus);
         mAccentPref = findPreference("style_accent");
@@ -155,28 +137,6 @@ public class StylePreferences extends SettingsPreferenceFragment {
         updateAccentPref(accent);
     }
 
-    private boolean isUsingDarkOrBlackTheme() {
-        if (mOverlayManager == null){
-            mOverlayManager = IOverlayManager.Stub.asInterface(ServiceManager.getService(Context.OVERLAY_SERVICE));
-        }
-        OverlayInfo systemuiThemeInfoDark = null;
-        OverlayInfo systemuiThemeInfoBlack = null;
-        try {
-            systemuiThemeInfoDark = mOverlayManager.getOverlayInfo("org.lineageos.overlay.dark",
-                    ActivityManager.getCurrentUser());
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        try {
-            systemuiThemeInfoBlack = mOverlayManager.getOverlayInfo("org.lineageos.overlay.black",
-                    ActivityManager.getCurrentUser());
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        return (systemuiThemeInfoDark != null && systemuiThemeInfoDark.isEnabled()) || 
-               (systemuiThemeInfoBlack != null && systemuiThemeInfoBlack.isEnabled());
-    }
-
     private void updateAccentPref(Accent accent) {
         int size = getResources().getDimensionPixelSize(R.dimen.style_accent_icon);
 
@@ -212,7 +172,7 @@ public class StylePreferences extends SettingsPreferenceFragment {
 
     private void onAutomagicCompleted(Suggestion suggestion) {
         String styleType = getString(suggestion.globalStyle == StyleInterface.STYLE_GLOBAL_LIGHT ?
-                R.string.style_global_entry_light : R.string.style_global_entry_dark_black).toLowerCase();
+                R.string.style_global_entry_light : R.string.style_global_entry_dark).toLowerCase();
 
         String accentName = mAccents.get(suggestion.selectedAccent).getName().toLowerCase();
         String message = getString(R.string.style_automagic_dialog_content, styleType, accentName);
@@ -240,6 +200,9 @@ public class StylePreferences extends SettingsPreferenceFragment {
                 break;
             case StyleInterface.STYLE_GLOBAL_DARK:
                 mStyleStatus = StyleStatus.DARK_ONLY;
+                break;
+            case StyleInterface.STYLE_GLOBAL_BLACK:
+                mStyleStatus = StyleStatus.BLACK_ONLY;
                 break;
             default:
                 mStyleStatus = StyleStatus.DYNAMIC;
@@ -270,23 +233,6 @@ public class StylePreferences extends SettingsPreferenceFragment {
     private void recoverStyleFromBadPackage() {
         // The package that was handling the styles is no longer available, reset to default
         onStyleChange(mStylePref, StyleInterface.STYLE_GLOBAL_AUTO_WALLPAPER);
-    }
-
-    private void setupForceBlackPref() {
-        int preference = LineageSettings.System.getInt(getContext().getContentResolver(),
-                LineageSettings.System.BERRY_FORCE_BLACK, 0);
-        mForceBlackPref.setChecked(preference == 1);
-        mForceBlackPref.setEnabled(mStyleStatus != StyleStatus.LIGHT_ONLY);
-    }
-
-    private boolean onForceBlackPrefChange(Preference preference, Object newValue) {
-        boolean value = (Boolean) newValue;
-        if (isUsingDarkOrBlackTheme()){
-            reload();
-        }
-        LineageSettings.System.putInt(getContext().getContentResolver(),
-                LineageSettings.System.BERRY_FORCE_BLACK, value ? 1 : 0);
-        return true;
     }
 
     private void applyStyle(Suggestion suggestion) {
@@ -322,29 +268,7 @@ public class StylePreferences extends SettingsPreferenceFragment {
         new Handler().postDelayed(() -> mInterface.setGlobalStyle(value, mPackageName), 500);
 
         setStyleIcon(value);
-        setupForceBlackPref();
         return true;
-    }
-
-    private void reload(){
-        Intent intent2 = new Intent(Intent.ACTION_MAIN);
-        intent2.addCategory(Intent.CATEGORY_HOME);
-        intent2.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        getContext().startActivity(intent2);
-        Toast.makeText(getContext(), R.string.applying_theme_toast, Toast.LENGTH_SHORT).show();
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-              @Override
-              public void run() {
-                  Intent intent = new Intent(Intent.ACTION_MAIN);
-                  intent.setClassName("org.lineageos.lineageparts",
-                        "org.lineageos.lineageparts.style.StylePreferences");
-                  intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                  intent.putExtra(SettingsDrawerActivity.EXTRA_SHOW_MENU, true);
-                  getContext().startActivity(intent);
-                  Toast.makeText(getContext(), R.string.theme_applied_toast, Toast.LENGTH_SHORT).show();
-              }
-        }, 2000);
     }
 
     private void setStyleIcon(int value) {
@@ -357,6 +281,7 @@ public class StylePreferences extends SettingsPreferenceFragment {
                 icon = R.drawable.ic_style_light;
                 break;
             case StyleInterface.STYLE_GLOBAL_DARK:
+            case StyleInterface.STYLE_GLOBAL_BLACK:
                 icon = R.drawable.ic_style_dark;
                 break;
             default:
@@ -384,6 +309,8 @@ public class StylePreferences extends SettingsPreferenceFragment {
                 return value == StyleInterface.STYLE_GLOBAL_LIGHT;
             case DARK_ONLY:
                 return value == StyleInterface.STYLE_GLOBAL_DARK;
+            case BLACK_ONLY:
+                return value == StyleInterface.STYLE_GLOBAL_BLACK;
             case DYNAMIC:
             default: // Never happens, but compilation fails without this
                 return true;
@@ -398,6 +325,9 @@ public class StylePreferences extends SettingsPreferenceFragment {
                 break;
             case StyleInterface.STYLE_GLOBAL_DARK:
                 proposedStatus = StyleStatus.DARK_ONLY;
+                break;
+            case StyleInterface.STYLE_GLOBAL_BLACK:
+                proposedStatus = StyleStatus.BLACK_ONLY;
                 break;
             default:
                 proposedStatus = StyleStatus.DYNAMIC;
