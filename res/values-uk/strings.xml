@@ -424,7 +424,6 @@
   <string name="status_bar_toggle_brightness">Керування яскравістю</string>
   <string name="status_bar_toggle_brightness_summary">Регулювати яскравість екрану рухом пальця по рядку стану</string>
   <!-- Status bar - icon blacklist -->
-  <string name="status_bar_icons_title">Значки в рядку стану</string>
   <string name="status_bar_icons_summary">Керування відображенням піктограм в панелі стану</string>
   <!-- Status bar - Network Traffic -->
   <!-- Protected apps -->

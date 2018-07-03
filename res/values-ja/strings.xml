@@ -424,7 +424,6 @@
   <string name="status_bar_toggle_brightness">明るさコントロール</string>
   <string name="status_bar_toggle_brightness_summary">ステータスバーの上をスライドして明るさを調整する</string>
   <!-- Status bar - icon blacklist -->
-  <string name="status_bar_icons_title">ステータスバーのアイコン</string>
   <string name="status_bar_icons_summary">ステータスバーに表示するアイコンをコントロールする</string>
   <!-- Status bar - Network Traffic -->
   <!-- Protected apps -->

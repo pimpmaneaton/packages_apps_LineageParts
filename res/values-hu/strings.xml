@@ -424,7 +424,6 @@
   <string name="status_bar_toggle_brightness">Fényerő vezérlés</string>
   <string name="status_bar_toggle_brightness_summary">Engedélyezi az értesítési sávon a fényerő változtatását ujjának csúsztatásával</string>
   <!-- Status bar - icon blacklist -->
-  <string name="status_bar_icons_title">Állapotsor ikonok</string>
   <string name="status_bar_icons_summary">Állapotsor ikonok megjelenítésének vezérlése</string>
   <!-- Status bar - Network Traffic -->
   <!-- Protected apps -->
