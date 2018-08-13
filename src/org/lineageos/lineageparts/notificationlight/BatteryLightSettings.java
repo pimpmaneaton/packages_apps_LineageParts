@@ -197,8 +197,8 @@ public class BatteryLightSettings extends SettingsPreferenceFragment implements
         }
 
         if (mReallyFullColorPref != null) {
-            int reallyfullColor = LineageSettings.System.getIntForUser(resolver,
-                    LineageSettings.System.BATTERY_LIGHT_REALLY_FULL_COLOR, mDefaultReallyFullColor, UserHandle.USER_CURRENT);
+            int reallyfullColor = LineageSettings.System.getInt(resolver,
+                    LineageSettings.System.BATTERY_LIGHT_REALLY_FULL_COLOR, mDefaultReallyFullColor);
             mReallyFullColorPref.setAllValues(reallyfullColor, 0, 0, false);
             updateBrightnessPrefColor(reallyfullColor);
         }
@@ -231,7 +231,7 @@ public class BatteryLightSettings extends SettingsPreferenceFragment implements
             LineageSettings.System.putInt(resolver, LineageSettings.System.BATTERY_LIGHT_FULL_COLOR, color);
             updateBrightnessPrefColor(color);
         } else if (key.equals(REALLY_FULL_COLOR_PREF)) {
-            LineageSettings.System.putIntForUser(resolver, LineageSettings.System.BATTERY_LIGHT_REALLY_FULL_COLOR, color, UserHandle.USER_CURRENT);
+            LineageSettings.System.putInt(resolver, LineageSettings.System.BATTERY_LIGHT_REALLY_FULL_COLOR, color);
             updateBrightnessPrefColor(color);
         }
     }
@@ -267,8 +267,8 @@ public class BatteryLightSettings extends SettingsPreferenceFragment implements
                 mDefaultMediumColor);
         LineageSettings.System.putInt(resolver, LineageSettings.System.BATTERY_LIGHT_FULL_COLOR,
                 mDefaultFullColor);
-        LineageSettings.System.putIntForUser(resolver, LineageSettings.System.BATTERY_LIGHT_REALLY_FULL_COLOR,
-                mDefaultReallyFullColor, UserHandle.USER_CURRENT);
+        LineageSettings.System.putInt(resolver, LineageSettings.System.BATTERY_LIGHT_REALLY_FULL_COLOR,
+                mDefaultReallyFullColor);
         refreshColors();
     }
 
